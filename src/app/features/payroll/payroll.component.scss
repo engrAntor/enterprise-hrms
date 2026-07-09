@@ -1,0 +1,110 @@
+.payroll-page > * { animation: fadeIn 0.4s ease both; }
+
+.header-actions { display: flex; gap: 12px; }
+
+.error-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; margin-bottom: 20px;
+  background: var(--danger-bg); border: 1px solid rgba(255,82,82,0.15);
+  border-radius: var(--radius-md); color: var(--danger); font-size: 13px; font-weight: 500;
+  svg { width: 18px; height: 18px; flex-shrink: 0; }
+  span { flex: 1; }
+}
+
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+.stat-card { animation: fadeIn 0.45s ease both; }
+
+.filter-bar { margin-bottom: 20px; }
+.filter-body { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.period-selector { display: flex; align-items: center; gap: 12px; }
+.filter-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.period-select { width: 140px; }
+
+.status-filters { display: flex; gap: 8px; align-items: center; }
+.status-btn {
+  background: var(--bg-surface-hover); border: 1px solid var(--border-color);
+  color: var(--text-secondary); padding: 6px 14px; border-radius: var(--radius-full);
+  font-size: 12px; font-weight: 600; transition: all var(--transition-fast);
+  &:hover { background: var(--border-light); color: var(--text-primary); }
+  &.active { background: var(--primary); border-color: var(--primary); color: white; }
+}
+
+.progress-container {
+  background: var(--bg-card); padding: 16px 24px; border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color); margin-bottom: 24px; box-shadow: var(--shadow-xs);
+}
+.progress-labels { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+.p-paid { color: var(--success); }
+.p-pending { color: #E09600; }
+.progress-track { width: 100%; height: 8px; background: var(--border-light); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--success), #00E6A0); transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.table-title { display: flex; align-items: center; gap: 12px; }
+.period-badge { background: var(--info-bg); color: var(--info); padding: 4px 10px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; border: 1px solid rgba(68,138,255,0.15); }
+.bulk-actions { display: flex; align-items: center; gap: 12px; }
+.selection-count { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+
+.table-scroll { overflow-x: auto; }
+.cb-cell { width: 40px; padding-right: 0 !important; }
+.cb-cell input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--primary); }
+.mono { font-variant-numeric: tabular-nums; font-weight: 500; }
+.fw700 { font-weight: 700; }
+.muted { color: var(--text-muted); }
+.dept-cell { color: var(--text-secondary); font-size: 12px; }
+.row-anim { animation: fadeIn 0.35s ease both; }
+.row-anim.selected { background: var(--bg-surface-hover); }
+.empty-row { text-align: center; padding: 40px !important; color: var(--text-muted); font-style: italic; }
+
+.action-btns { display: flex; gap: 4px; justify-content: flex-end; align-items: center; }
+.paid-tag { display: inline-flex; align-items: center; gap: 4px; color: var(--success); font-size: 12px; font-weight: 600; padding: 6px 12px; }
+.cancelled-tag { color: var(--danger); font-size: 12px; font-weight: 600; padding: 6px 12px; }
+
+.modal-compact { max-width: 480px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.gen-info { color: var(--text-secondary); margin-bottom: 20px; font-size: 14px; line-height: 1.5; }
+.tax-info-box {
+  display: flex; gap: 12px; padding: 12px 16px; background: var(--info-bg);
+  border: 1px solid rgba(68,138,255,0.15); border-radius: var(--radius-md);
+  color: var(--info); font-size: 12.5px; line-height: 1.5; align-items: flex-start;
+  svg { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; }
+}
+.spinner-icon { display: inline-block; animation: spin 1s linear infinite; margin-right: 4px; }
+
+/* Payslip Breakdown Styles */
+.payslip-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border-light); margin-bottom: 24px; }
+.ps-emp { flex: 1; }
+.ps-name { font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+.ps-dept { font-size: 13px; color: var(--text-secondary); }
+.ps-period { text-align: center; padding: 0 24px; border-left: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+.ps-period-lbl { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; }
+.ps-period-val { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.ps-status { padding-left: 24px; }
+
+.breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 24px; }
+.bk-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1.5px solid var(--border-light); }
+.bk-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.bk-item { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.bk-lbl { color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.tax-hint { font-size: 11px; color: var(--text-muted); background: var(--bg-surface-hover); padding: 2px 6px; border-radius: 4px; }
+.bk-val { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bk-total { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px dashed var(--border-color); font-weight: 700; font-size: 15px; color: var(--text-primary); }
+
+.net-pay-banner { background: linear-gradient(135deg, var(--primary), #8078FF); color: white; padding: 20px 24px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.25); }
+.np-lbl { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+.np-val { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+
+@media (max-width: 1024px) {
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .breakdown-grid { grid-template-columns: 1fr; gap: 24px; }
+}
+@media (max-width: 768px) {
+  .summary-grid { grid-template-columns: 1fr; }
+  .filter-body { flex-direction: column; align-items: stretch; }
+  .status-filters { flex-wrap: wrap; }
+  .payslip-header { flex-direction: column; gap: 16px; align-items: flex-start; }
+  .ps-period { border: none; padding: 0; text-align: left; }
+  .ps-status { padding: 0; }
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }

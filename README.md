@@ -1,27 +1,42 @@
-# HrmsFrontend
+# HRMS Platform Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+A modern, enterprise-ready Human Resource Management System (HRMS) built with Angular 17 and designed to integrate seamlessly with a .NET backend API.
 
-## Development server
+## 🚀 Features
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- **Dynamic Dashboard**: Real-time insights and metrics.
+- **Employee Management**: View, add, and manage employee profiles and details.
+- **Salary Administration**: Manage salary components, structures, and employee compensations.
+- **Payroll Processing**: Automated payroll generation, tracking, and management.
+- **Modern UI/UX**: Built with responsive design principles, custom SCSS themes, and a clean layout system.
 
-## Code scaffolding
+## 🛠 Tech Stack
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- **Framework**: Angular 17 (Standalone Components)
+- **Styling**: SCSS, Custom Design System
+- **HTTP**: RxJS, Angular HttpClient with Token Interceptors
+- **Icons**: Phosphor Icons (or preferred icon pack)
 
-## Build
+## 🏃‍♂️ Running Locally
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-## Running unit tests
+2. **Start Development Server**:
+   ```bash
+   npm start
+   ```
+   Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+3. **Backend Integration**:
+   Ensure the .NET backend API is running. Check `src/environments/environment.ts` to verify the `apiBaseUrl` points to your active backend instance.
 
-## Running end-to-end tests
+## 📦 Build for Production
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+Run `npm run build` to build the project. The build artifacts will be stored in the `dist/` directory.
 
-## Further help
+## 📄 License
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+This project is licensed under the MIT License.

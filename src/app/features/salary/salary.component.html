@@ -1,0 +1,236 @@
+<div class="salary-page">
+  <div class="page-header">
+    <div><h1 class="page-title">Salary Management</h1><p class="page-subtitle">Manage employee compensations, bonuses &amp; deductions</p></div>
+    <button class="btn btn-primary" (click)="openAdd()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Salary Record
+    </button>
+  </div>
+
+  <!-- Error Banner -->
+  <div class="error-banner" *ngIf="loadError()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    <span>{{ loadError() }}</span>
+    <button class="btn btn-sm btn-secondary" (click)="load()">Retry</button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="card card-hover stat-card" *ngFor="let s of summaryCards; let i = index" [style.animation-delay]="i * 60 + 'ms'">
+      <div class="card-body">
+        <div class="stat-top">
+          <div class="stat-icon" [style.background]="s.bg"><span [innerHTML]="s.icon"></span></div>
+          <div *ngIf="s.trend !== undefined" class="stat-change positive">
+            {{ s.trend > 0 ? '+' : '' }}{{ s.trend }}{{ s.isPercent ? '%' : '' }}
+          </div>
+        </div>
+        <div class="stat-value">{{ s.value }}</div>
+        <div class="stat-label">{{ s.label }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card filter-bar">
+    <div class="card-body filter-body">
+      <div class="search-box hdr-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="form-input" placeholder="Search employees..." [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()">
+      </div>
+      <select class="form-select filter-select" [(ngModel)]="filterDept" (ngModelChange)="applyFilters()">
+        <option value="">All Departments</option>
+        <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
+      </select>
+      <select class="form-select filter-select" [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
+        <option value="">All Statuses</option>
+        <option value="Current">Current</option>
+        <option value="Pending">Pending</option>
+        <option value="Revised">Revised</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Salary Records <span class="rec-count">({{ filtered().length }})</span></h3>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th (click)="sortBy('employeeName')" class="sortable">Employee <span class="sort-arrow">{{ sortIcon('employeeName') }}</span></th>
+            <th>Department</th>
+            <th (click)="sortBy('baseSalary')" class="sortable">Base Salary <span class="sort-arrow">{{ sortIcon('baseSalary') }}</span></th>
+            <th>Bonus</th><th>Deductions</th>
+            <th (click)="sortBy('netSalary')" class="sortable">Net Salary <span class="sort-arrow">{{ sortIcon('netSalary') }}</span></th>
+            <th>Effective Date</th><th>Status</th>
+            <th style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of filtered(); let i = index" class="row-anim" [style.animation-delay]="i * 35 + 'ms'">
+            <td><span class="fw700">{{ r.employeeName }}</span></td>
+            <td><span class="dept-tag">{{ r.department }}</span></td>
+            <td class="mono">${{ r.baseSalary | number:'1.0-0' }}</td>
+            <td class="mono clr-success">+${{ r.bonus | number:'1.0-0' }}</td>
+            <td class="mono clr-danger">-${{ r.deductions | number:'1.0-0' }}</td>
+            <td class="mono fw700">${{ r.netSalary | number:'1.0-0' }}</td>
+            <td class="mono date-cell">{{ r.effectiveDate | date:'mediumDate' }}</td>
+            <td><span class="badge" [ngClass]="badgeFor(r.status)">{{ r.status }}</span></td>
+            <td style="text-align:right">
+              <div class="action-btns">
+                <button class="btn btn-ghost btn-sm" title="Edit" (click)="openEdit(r)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-ghost btn-sm" title="Revision History" (click)="openRevisions(r)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><circle cx="12" cy="12" r="10"/></svg>
+                </button>
+                <button class="btn btn-ghost btn-sm clr-danger" title="Delete" (click)="confirmDelete(r)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filtered().length === 0">
+            <td colspan="9" class="empty-row">No salary records found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-overlay" *ngIf="showModal()" (click)="showModal.set(false)">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editing() ? 'Update Salary' : 'Add Salary Record' }}</h2>
+        <button class="btn btn-ghost btn-icon" (click)="showModal.set(false)">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Form Errors -->
+        <div class="form-error-banner" *ngIf="formErrors.general">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ formErrors.general }}
+        </div>
+
+        <div class="edit-emp-name" *ngIf="editing()">{{ editing()?.employeeName }}</div>
+
+        <div class="form-grid">
+          <div class="form-group" *ngIf="!editing()">
+            <label class="form-label">Employee</label>
+            <select class="form-select" [(ngModel)]="editForm.employeeId" [ngClass]="{'error': formErrors.employeeId}">
+              <option value="">Select employee...</option>
+              <option *ngFor="let e of employees" [value]="e.id">{{ e.firstName }} {{ e.lastName }}</option>
+            </select>
+            <div class="form-error" *ngIf="formErrors.employeeId">{{ formErrors.employeeId }}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Base Salary ($)</label>
+            <input class="form-input" type="number" min="0" [(ngModel)]="editForm.baseSalary" [ngClass]="{'error': formErrors.baseSalary}" (ngModelChange)="recalcNet()">
+            <div class="form-error" *ngIf="formErrors.baseSalary">{{ formErrors.baseSalary }}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Effective Date</label>
+            <input class="form-input" type="date" [(ngModel)]="editForm.effectiveDate" [ngClass]="{'error': formErrors.effectiveDate}">
+            <div class="form-error" *ngIf="formErrors.effectiveDate">{{ formErrors.effectiveDate }}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" [(ngModel)]="editForm.status">
+              <option value="Current">Current</option>
+              <option value="Pending">Pending</option>
+              <option value="Revised">Revised</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Bonuses Section -->
+        <div class="section-divider">
+          <h4>Bonuses</h4>
+          <button class="btn btn-ghost btn-sm" (click)="addBonusItem()">+ Add</button>
+        </div>
+        <div class="items-list">
+          <div class="item-row" *ngFor="let b of editForm.bonusItems; let i = index">
+            <input class="form-input item-label" placeholder="Label" [(ngModel)]="b.label">
+            <input class="form-input item-amount" type="number" min="0" placeholder="Amount" [(ngModel)]="b.amount" (ngModelChange)="recalcNet()">
+            <button class="btn btn-ghost btn-icon btn-sm" (click)="removeBonusItem(i)">✕</button>
+          </div>
+          <div class="empty-items" *ngIf="editForm.bonusItems.length === 0">No bonuses added</div>
+        </div>
+
+        <!-- Deductions Section -->
+        <div class="section-divider">
+          <h4>Deductions</h4>
+          <button class="btn btn-ghost btn-sm" (click)="addDeductionItem()">+ Add</button>
+        </div>
+        <div class="items-list">
+          <div class="item-row" *ngFor="let d of editForm.deductionItems; let i = index">
+            <input class="form-input item-label" placeholder="Label" [(ngModel)]="d.label">
+            <input class="form-input item-amount" type="number" min="0" placeholder="Amount" [(ngModel)]="d.amount" (ngModelChange)="recalcNet()">
+            <button class="btn btn-ghost btn-icon btn-sm" (click)="removeDeductionItem(i)">✕</button>
+          </div>
+          <div class="empty-items" *ngIf="editForm.deductionItems.length === 0">No deductions added</div>
+        </div>
+
+        <!-- Net Preview -->
+        <div class="net-preview">
+          <span class="net-label">Net Salary</span>
+          <span class="net-value">${{ netPreview | number:'1.0-0' }}</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showModal.set(false)">Cancel</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Saving...' : (editing() ? 'Update Salary' : 'Create Record') }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revision History Modal -->
+  <div class="modal-overlay" *ngIf="showRevisions()" (click)="showRevisions.set(false)">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Revision History</h2>
+        <button class="btn btn-ghost btn-icon" (click)="showRevisions.set(false)">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="edit-emp-name">{{ revisionEmployee }}</div>
+        <div class="timeline" *ngIf="revisions.length > 0">
+          <div class="tl-item" *ngFor="let rev of revisions; let i = index" [style.animation-delay]="i * 80 + 'ms'">
+            <div class="tl-dot"></div>
+            <div class="tl-content">
+              <div class="tl-header">
+                <span class="tl-date">{{ rev.createdAt | date:'mediumDate' }}</span>
+                <span class="badge badge-info tl-change">{{ getChangePercent(rev) }}</span>
+              </div>
+              <div class="tl-salaries">
+                <span class="tl-prev">${{ rev.previousSalary | number:'1.0-0' }}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tl-arrow"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <span class="tl-new">${{ rev.newSalary | number:'1.0-0' }}</span>
+              </div>
+              <div class="tl-meta">
+                <span><strong>Reason:</strong> {{ rev.reason }}</span>
+                <span><strong>Approved by:</strong> {{ rev.approvedBy }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="empty-items" *ngIf="revisions.length === 0">No revision history available</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="deleteTarget()" (click)="deleteTarget.set(null)">
+    <div class="modal-container modal-compact" (click)="$event.stopPropagation()">
+      <div class="modal-header"><h2>Confirm Delete</h2><button class="btn btn-ghost btn-icon" (click)="deleteTarget.set(null)">✕</button></div>
+      <div class="modal-body">
+        <p class="confirm-text">Are you sure you want to delete the salary record for <strong>{{ deleteTarget()?.employeeName }}</strong>? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="deleteTarget.set(null)">Cancel</button>
+        <button class="btn btn-danger" (click)="doDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>

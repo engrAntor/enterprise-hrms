@@ -1,0 +1,264 @@
+<div class="payroll-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Payroll Management</h1>
+      <p class="page-subtitle">Generate and manage monthly payrolls &amp; view reports</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="exportCSV()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+      <button class="btn btn-primary" (click)="showGenModal.set(true)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+        Generate Payroll
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div class="error-banner" *ngIf="loadError()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    <span>{{ loadError() }}</span>
+    <button class="btn btn-sm btn-secondary" (click)="load()">Retry</button>
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <div class="summary-grid">
+    <div class="card card-hover stat-card" *ngFor="let s of sumCards; let i = index" [style.animation-delay]="i * 45 + 'ms'">
+      <div class="card-body">
+        <div class="stat-top">
+          <div class="stat-icon" [style.background]="s.bg"><span [innerHTML]="s.icon"></span></div>
+          <div *ngIf="s.trend !== undefined" class="stat-change positive">
+            {{ s.trend > 0 ? '+' : '' }}{{ s.trend }}{{ s.isPercent ? '%' : '' }}
+          </div>
+        </div>
+        <div class="stat-value">{{ s.value }}</div>
+        <div class="stat-label">{{ s.label }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Period & Status Filter Bar -->
+  <div class="card filter-bar">
+    <div class="card-body filter-body">
+      <div class="period-selector">
+        <label class="filter-label">Period:</label>
+        <select class="form-select period-select" [(ngModel)]="selectedMonth" (ngModelChange)="load()">
+          <option *ngFor="let m of months; let i = index" [value]="i+1">{{ m }}</option>
+        </select>
+        <select class="form-select period-select" [(ngModel)]="selectedYear" (ngModelChange)="load()">
+          <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+        </select>
+      </div>
+      <div class="status-filters">
+        <span class="filter-label">Status:</span>
+        <button class="status-btn" [class.active]="filterStatus === ''" (click)="setFilter('')">All</button>
+        <button class="status-btn" [class.active]="filterStatus === 'Generated'" (click)="setFilter('Generated')">Generated</button>
+        <button class="status-btn" [class.active]="filterStatus === 'Approved'" (click)="setFilter('Approved')">Approved</button>
+        <button class="status-btn" [class.active]="filterStatus === 'Paid'" (click)="setFilter('Paid')">Paid</button>
+        <button class="status-btn" [class.active]="filterStatus === 'Cancelled'" (click)="setFilter('Cancelled')">Cancelled</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Bar (Paid vs Pending) -->
+  <div class="progress-container" *ngIf="records().length > 0">
+    <div class="progress-labels">
+      <span class="p-paid"><strong>{{ paidCount }}</strong> Paid</span>
+      <span class="p-pending"><strong>{{ records().length - paidCount }}</strong> Pending</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" [style.width]="(paidCount / records().length * 100) + '%'"></div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="card">
+    <div class="card-header">
+      <div class="table-title">
+        <h3>Payroll Records</h3>
+        <span class="period-badge">{{ currentPeriodLabel }}</span>
+      </div>
+      <div class="bulk-actions" *ngIf="hasSelections()">
+        <span class="selection-count">{{ selectedIds.size }} selected</span>
+        <button class="btn btn-sm btn-info" *ngIf="canBulkApprove()" (click)="bulkApprove()">Approve Selected</button>
+        <button class="btn btn-sm btn-primary" *ngIf="canBulkPay()" (click)="bulkPay()">Pay Selected</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="cb-cell">
+              <input type="checkbox" [checked]="allSelected()" (change)="toggleAll()" [disabled]="filtered().length === 0">
+            </th>
+            <th>Employee</th>
+            <th>Dept</th>
+            <th>Gross</th>
+            <th>Tax</th>
+            <th>Insurance</th>
+            <th>Other</th>
+            <th>Net Pay</th>
+            <th>Status</th>
+            <th style="text-align:right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of filtered(); let i = index" class="row-anim" [style.animation-delay]="i * 40 + 'ms'" [class.selected]="selectedIds.has(r.id)">
+            <td class="cb-cell">
+              <input type="checkbox" [checked]="selectedIds.has(r.id)" (change)="toggleSelection(r.id)">
+            </td>
+            <td><span class="fw700">{{ r.employeeName }}</span></td>
+            <td class="dept-cell">{{ r.department }}</td>
+            <td class="mono">${{ r.grossSalary | number:'1.0-0' }}</td>
+            <td class="mono muted">-${{ r.taxDeduction | number:'1.0-0' }}</td>
+            <td class="mono muted">-${{ r.insuranceDeduction | number:'1.0-0' }}</td>
+            <td class="mono muted">-${{ r.otherDeductions | number:'1.0-0' }}</td>
+            <td class="mono fw700">${{ r.netSalary | number:'1.0-0' }}</td>
+            <td><span class="badge" [ngClass]="statusCls(r.status)">{{ r.status }}</span></td>
+            <td style="text-align:right">
+              <div class="action-btns">
+                <button *ngIf="r.status === 'Generated'" class="btn btn-sm btn-success" (click)="changeStatus(r, 'Approved')">Approve</button>
+                <button *ngIf="r.status === 'Approved'" class="btn btn-sm btn-primary" (click)="changeStatus(r, 'Paid')">Pay</button>
+                <button *ngIf="r.status === 'Generated' || r.status === 'Approved'" class="btn btn-sm btn-ghost clr-danger" title="Cancel" (click)="changeStatus(r, 'Cancelled')">✕</button>
+                <span *ngIf="r.status === 'Paid'" class="paid-tag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Done
+                </span>
+                <span *ngIf="r.status === 'Cancelled'" class="cancelled-tag">Cancelled</span>
+                
+                <button class="btn btn-ghost btn-sm btn-icon" title="View Payslip Breakdown" (click)="openBreakdown(r)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filtered().length === 0">
+            <td colspan="10" class="empty-row">No payroll records found for this period.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Generate Modal -->
+  <div class="modal-overlay" *ngIf="showGenModal()" (click)="showGenModal.set(false)">
+    <div class="modal-container modal-compact" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Generate Payroll</h2>
+        <button class="btn btn-ghost btn-icon" (click)="showGenModal.set(false)">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="gen-info">This will automatically calculate salaries, taxes, and deductions for all active employees for the selected period.</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Month</label>
+            <select class="form-select" [(ngModel)]="genMonth">
+              <option *ngFor="let m of months; let i = index" [value]="i+1">{{ m }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year</label>
+            <select class="form-select" [(ngModel)]="genYear">
+              <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="tax-info-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <div>Taxes will be auto-calculated using the standard progressive tax brackets. Insurance is calculated at 5% of gross.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showGenModal.set(false)">Cancel</button>
+        <button class="btn btn-primary" (click)="generate()" [disabled]="generating()">
+          <span *ngIf="generating()" class="spinner-icon">↻</span>
+          {{ generating() ? 'Processing...' : 'Generate Payroll' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payslip Breakdown Modal -->
+  <div class="modal-overlay" *ngIf="breakdownTarget()" (click)="breakdownTarget.set(null)">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Payslip Breakdown</h2>
+        <button class="btn btn-ghost btn-icon" (click)="breakdownTarget.set(null)">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="payslip-header">
+          <div class="ps-emp">
+            <div class="ps-name">{{ breakdownTarget()?.employeeName }}</div>
+            <div class="ps-dept">{{ breakdownTarget()?.department }}</div>
+          </div>
+          <div class="ps-period">
+            <div class="ps-period-lbl">Period</div>
+            <div class="ps-period-val">{{ months[breakdownTarget()!.month - 1] }} {{ breakdownTarget()?.year }}</div>
+          </div>
+          <div class="ps-status">
+            <span class="badge" [ngClass]="statusCls(breakdownTarget()!.status)">{{ breakdownTarget()?.status }}</span>
+          </div>
+        </div>
+
+        <div class="breakdown-grid">
+          <!-- Earnings -->
+          <div class="bk-section">
+            <h4 class="bk-title clr-success">Earnings</h4>
+            <div class="bk-list">
+              <div class="bk-item">
+                <span class="bk-lbl">Base Salary</span>
+                <span class="bk-val">${{ breakdownTarget()?.baseSalary | number:'1.0-0' }}</span>
+              </div>
+              <div class="bk-item" *ngIf="breakdownTarget()!.bonus > 0">
+                <span class="bk-lbl">Bonuses</span>
+                <span class="bk-val">${{ breakdownTarget()?.bonus | number:'1.0-0' }}</span>
+              </div>
+              <div class="bk-item" *ngIf="breakdownTarget()!.overtime > 0">
+                <span class="bk-lbl">Overtime</span>
+                <span class="bk-val">${{ breakdownTarget()?.overtime | number:'1.0-0' }}</span>
+              </div>
+            </div>
+            <div class="bk-total">
+              <span>Gross Earnings</span>
+              <span>${{ breakdownTarget()?.grossSalary | number:'1.0-0' }}</span>
+            </div>
+          </div>
+
+          <!-- Deductions -->
+          <div class="bk-section">
+            <h4 class="bk-title clr-danger">Deductions</h4>
+            <div class="bk-list">
+              <div class="bk-item">
+                <span class="bk-lbl">Income Tax <span class="tax-hint" *ngIf="breakdownTaxBracket()">(Bracket: {{ breakdownTaxBracket()?.label }})</span></span>
+                <span class="bk-val">-${{ breakdownTarget()?.taxDeduction | number:'1.0-0' }}</span>
+              </div>
+              <div class="bk-item">
+                <span class="bk-lbl">Insurance (5%)</span>
+                <span class="bk-val">-${{ breakdownTarget()?.insuranceDeduction | number:'1.0-0' }}</span>
+              </div>
+              <div class="bk-item" *ngIf="breakdownTarget()!.otherDeductions > 0">
+                <span class="bk-lbl">Other Deductions</span>
+                <span class="bk-val">-${{ breakdownTarget()?.otherDeductions | number:'1.0-0' }}</span>
+              </div>
+            </div>
+            <div class="bk-total">
+              <span>Total Deductions</span>
+              <span>-${{ (breakdownTarget()!.taxDeduction + breakdownTarget()!.insuranceDeduction + breakdownTarget()!.otherDeductions) | number:'1.0-0' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="net-pay-banner">
+          <div class="np-lbl">Net Pay Disbursed</div>
+          <div class="np-val">${{ breakdownTarget()?.netSalary | number:'1.0-0' }}</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="breakdownTarget.set(null)">Close</button>
+      </div>
+    </div>
+  </div>
+
+</div>
